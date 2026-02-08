@@ -8,7 +8,7 @@ export default function AdminPage() {
   const [password, setPassword] = useState('');
   const [showError, setShowError] = useState(false);
   
-  const correctPassword = process.env.NEXT_PUBLIC_ADMIN_PASSWORD || 'admin123';
+  const correctPassword = process.env.NEXT_PUBLIC_ADMIN_PASSWORD || 'proservice';
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -69,7 +69,7 @@ export default function AdminPage() {
             
             <div className="mt-6 pt-6 border-t">
               <p className="text-xs text-gray-500 text-center">
-                Default password: admin123
+                Default password: proservice
               </p>
               <p className="text-xs text-gray-500 text-center mt-1">
                 Change this in your environment variables
