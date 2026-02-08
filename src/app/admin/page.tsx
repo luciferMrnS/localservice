@@ -49,7 +49,7 @@ export default function AdminPage() {
                     setShowError(false);
                   }}
                   placeholder="Enter password"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 placeholder-gray-500"
                   required
                 />
                 {showError && (

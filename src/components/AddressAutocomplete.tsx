@@ -68,7 +68,7 @@ return (
       ref={inputRef}
       type="text"
       placeholder={placeholder}
-      className={className}
+      className={`${className} text-gray-900 placeholder-gray-500`}
       disabled={!isLoaded}
     />
   );

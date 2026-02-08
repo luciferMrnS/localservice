@@ -119,7 +119,7 @@ export default function ServiceRequestForm({
                   {...register('clientName')}
                   type="text"
                   id="clientName"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 placeholder-gray-500"
                   placeholder="John Doe"
                 />
                 {errors.clientName && (
@@ -135,7 +135,7 @@ export default function ServiceRequestForm({
                   {...register('phoneNumber')}
                   type="tel"
                   id="phoneNumber"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 placeholder-gray-500"
                   placeholder="(555) 123-4567"
                 />
                 {errors.phoneNumber && (
@@ -157,7 +157,7 @@ export default function ServiceRequestForm({
                 <AddressAutocomplete
                   onAddressSelect={handleAddressSelect}
                   placeholder="123 Main St, City, State 12345"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 placeholder-gray-500"
                 />
                 <input
                   {...register('serviceAddress')}
@@ -195,7 +195,7 @@ export default function ServiceRequestForm({
                   {...register('description')}
                   id="description"
                   rows={4}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 placeholder-gray-500"
                   placeholder="Please describe what you need help with..."
                 />
                 {errors.description && (
@@ -213,7 +213,7 @@ export default function ServiceRequestForm({
                   accept="image/*"
                   multiple
                   onChange={handlePhotoUpload}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 placeholder-gray-500"
                 />
                 {photos.length > 0 && (
                   <div className="mt-3 grid grid-cols-3 gap-2">
@@ -321,7 +321,7 @@ export default function ServiceRequestForm({
                     {...register('scheduledDateTime', { required: bookingType === 'scheduled' })}
                     type="datetime-local"
                     id="scheduledDateTime"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 placeholder-gray-500"
                   />
                   {errors.scheduledDateTime && (
                     <p className="mt-1 text-sm text-red-600">{errors.scheduledDateTime.message}</p>
