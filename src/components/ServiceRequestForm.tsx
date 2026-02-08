@@ -158,6 +158,7 @@ export default function ServiceRequestForm({
                   onAddressSelect={handleAddressSelect}
                   placeholder="123 Main St, City, State 12345"
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 placeholder-gray-500"
+                  value={selectedAddress?.address || ''}
                 />
                 <input
                   {...register('serviceAddress')}
