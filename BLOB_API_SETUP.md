@@ -57,7 +57,7 @@ const response = await fetch(`/api/upload?filename=${filename}`, {
 ### **Step 3: Add to Environment Variables**
 Add to both `.env.local` and Vercel environment variables:
 ```env
-BLOB_READ_WRITE_TOKEN=vercel_blob_rw_your_actual_token
+BLOB_READ_WRITE_TOKEN="vercel_blob_rw_HNwwbDBCTZuxLzL4_0Dj6UITDnEXk1HjSPzp2pV0HCcAN6C"
 ```
 
 ### **Step 4: Deploy**
