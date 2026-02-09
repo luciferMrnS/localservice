@@ -33,7 +33,17 @@ export default function Home() {
       // Upload photos if any
       let photoUrls: string[] = [];
       if (photos.length > 0) {
-        photoUrls = await uploadPhotos(photos);
+        // Convert photos to base64 for storage in database
+        photoUrls = await Promise.all(
+          photos.map(async (file) => {
+            const base64 = await new Promise<string>((resolve) => {
+              const reader = new FileReader();
+              reader.onloadend = () => resolve(reader.result as string);
+              reader.readAsDataURL(file);
+            });
+            return base64;
+          })
+        );
       }
       
       // Prepare request data
@@ -69,8 +79,9 @@ export default function Home() {
       alert('Request submitted successfully! We will contact you soon.');
       setSelectedService(null);
       setShowCustomForm(false);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error submitting request:', error);
+      console.error('Error details:', error.message, error.code, error.diagnostics);
       
       // Provide more specific error messages
       let errorMessage = 'Error submitting request. Please try again.';
@@ -84,6 +95,12 @@ export default function Home() {
           errorMessage = 'Service unavailable. Please check your internet connection.';
         } else if (error.message.includes('unauthenticated')) {
           errorMessage = 'Authentication failed. Please contact support.';
+        } else if (error.message.includes('ECONNREFUSED') || error.message.includes('connection')) {
+          errorMessage = 'Cannot connect to database. Please check your internet connection.';
+        } else if (error.message.includes('DATABASE_URL')) {
+          errorMessage = 'Database not configured. Please contact support.';
+        } else {
+          errorMessage = `Error: ${error.message}`;
         }
       }
       
