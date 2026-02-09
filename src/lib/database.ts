@@ -1,4 +1,4 @@
-import { put, list, del, get } from '@vercel/blob';
+import { put, list, del, getDownloadUrl } from '@vercel/blob';
 import { ServiceRequest } from '@/types';
 
 const BLOB_NAME = 'service-requests.json';
@@ -33,7 +33,8 @@ async function loadData(): Promise<void> {
       const blob = result.blobs.find(b => b.pathname === BLOB_NAME);
       
       if (blob) {
-        const response = await get(blob.pathname);
+        const url = await getDownloadUrl(blob.pathname);
+        const response = await fetch(url);
         const text = await response.text();
         const data = JSON.parse(text);
         serviceRequests = data.requests || [];
