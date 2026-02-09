@@ -1,6 +1,41 @@
 import { NextResponse } from 'next/server';
-import { getServiceRequests } from '@/lib/database';
+import { createServiceRequest, getServiceRequests } from '@/lib/database';
 import { ServiceRequest } from '@/types';
+
+export async function POST(request: Request) {
+  try {
+    const requestData = await request.json();
+    
+    console.log('🔥 API: Creating service request...', requestData);
+    
+    const result = await createServiceRequest(requestData);
+    
+    console.log('✅ API: Service request created successfully:', result);
+    
+    return NextResponse.json({ success: true, data: result });
+  } catch (error) {
+    console.error('❌ API: Error creating service request:', error);
+    
+    let errorMessage = 'Failed to create service request';
+    
+    if (error instanceof Error) {
+      if (error.message.includes('DATABASE_URL not configured')) {
+        errorMessage = 'Database not configured. Please contact support.';
+      } else if (error.message.includes('permission-denied')) {
+        errorMessage = 'Database permission denied. Please contact support.';
+      } else if (error.message.includes('unavailable')) {
+        errorMessage = 'Database unavailable. Please try again later.';
+      } else {
+        errorMessage = error.message;
+      }
+    }
+    
+    return NextResponse.json(
+      { error: errorMessage },
+      { status: 500 }
+    );
+  }
+}
 
 export async function GET(request: Request) {
   try {
