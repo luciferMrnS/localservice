@@ -1,23 +1,20 @@
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { storage } from './firebase';
+import { put } from '@vercel/blob';
 
 export async function uploadPhotos(files: File[]): Promise<string[]> {
   const uploadPromises = files.map(async (file) => {
     try {
       // Create a unique filename
       const timestamp = Date.now();
-      const filename = `${timestamp}-${file.name}`;
+      const randomId = Math.random().toString(36).substring(2, 15);
+      const filename = `${timestamp}-${randomId}-${file.name}`;
       
-      // Create a reference to the file location
-      const storageRef = ref(storage, `service-photos/${filename}`);
+      // Upload to Vercel Blob
+      const blob = await put(filename, file, {
+        access: 'public',
+        token: process.env.BLOB_READ_WRITE_TOKEN,
+      });
       
-      // Upload the file
-      await uploadBytes(storageRef, file);
-      
-      // Get the download URL
-      const downloadURL = await getDownloadURL(storageRef);
-      
-      return downloadURL;
+      return blob.url;
     } catch (error) {
       console.error('Error uploading photo:', error);
       throw error;
