@@ -13,24 +13,33 @@ export default function AdminDashboard() {
   const [showMap, setShowMap] = useState(false);
 
   useEffect(() => {
+    console.log('🏠 Admin dashboard mounted, fetching initial requests...');
     fetchRequests();
     
     // Subscribe to real-time updates
     const unsubscribe = subscribeToRequests(() => {
-      console.log('Admin dashboard: Data changed, refreshing...');
+      console.log('🔄 Admin dashboard: Data changed, refreshing...');
       fetchRequests();
     });
     
-    return unsubscribe;
+    console.log('👂 Admin dashboard subscribed to updates');
+    
+    return () => {
+      console.log('🔇 Admin dashboard unsubscribed from updates');
+      unsubscribe();
+    };
   }, []);
 
   const fetchRequests = async () => {
     try {
+      console.log('📥 Admin dashboard: Fetching requests...');
       const data = await getServiceRequests();
-      console.log('Admin dashboard: Fetched requests:', data);
+      console.log('📊 Admin dashboard: Fetched requests:', data);
+      console.log('📝 Setting requests state...');
       setRequests(data);
+      console.log('✅ Admin dashboard: Requests state updated');
     } catch (error) {
-      console.error('Error fetching requests:', error);
+      console.error('❌ Admin dashboard: Error fetching requests:', error);
     } finally {
       setLoading(false);
     }

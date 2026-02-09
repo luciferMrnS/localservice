@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import AdminDashboard from '@/components/AdminDashboard';
+import DebugPanel from '@/components/DebugPanel';
 
 export default function AdminPage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -81,5 +82,10 @@ export default function AdminPage() {
     );
   }
 
-  return <AdminDashboard />;
+  return (
+    <>
+      <AdminDashboard />
+      <DebugPanel />
+    </>
+  );
 }

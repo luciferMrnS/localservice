@@ -61,8 +61,11 @@ export default function Home() {
         requestData.scheduledDateTime = new Date(data.scheduledDateTime);
       }
 
-      // Submit to Firebase
-      await createServiceRequest(requestData);
+      // Submit to database
+      console.log('💾 Creating service request...');
+      console.log('📋 Request data:', requestData);
+      const result = await createServiceRequest(requestData);
+      console.log('✅ Service request created:', result);
       
       alert('Request submitted successfully! We will contact you soon.');
       setSelectedService(null);

@@ -37,11 +37,18 @@ export function subscribeToRequests(callback: () => void) {
 
 // Notify all listeners of data changes
 function notifyListeners() {
-  listeners.forEach(callback => callback());
+  console.log('📢 notifyListeners called, listeners:', listeners.length);
+  listeners.forEach((callback, index) => {
+    console.log(`📞 Calling listener ${index + 1}`);
+    callback();
+  });
+  console.log('✅ All listeners notified');
 }
 
 export async function createServiceRequest(requestData: Omit<ServiceRequest, 'id' | 'createdAt' | 'updatedAt'>) {
   try {
+    console.log('🔥 createServiceRequest called with:', requestData);
+    
     const newRequest: ServiceRequest = {
       id: nextId.toString(),
       ...requestData,
@@ -52,15 +59,18 @@ export async function createServiceRequest(requestData: Omit<ServiceRequest, 'id
     serviceRequests.push(newRequest);
     nextId++;
     
-    console.log('Service request created:', newRequest);
-    console.log('All requests:', serviceRequests);
+    console.log('✅ Service request created:', newRequest);
+    console.log('📊 All requests now:', serviceRequests);
+    console.log('👥 Notifying', listeners.length, 'listeners...');
     
     // Notify all listeners that data has changed
     notifyListeners();
     
+    console.log('📢 Listeners notified');
+    
     return newRequest;
   } catch (error) {
-    console.error('Error creating service request:', error);
+    console.error('❌ Error creating service request:', error);
     throw error;
   }
 }
