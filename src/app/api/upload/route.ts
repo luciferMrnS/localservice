@@ -22,8 +22,17 @@ export async function POST(request: Request) {
       );
     }
 
+    // Get the file body
+    const body = await request.arrayBuffer();
+    if (!body) {
+      return NextResponse.json(
+        { error: 'No file body provided' },
+        { status: 400 }
+      );
+    }
+
     // Upload file to Vercel Blob
-    const blob = await put(filename, request.body, {
+    const blob = await put(filename, body, {
       access: 'public',
       token: blobToken,
     });
