@@ -142,5 +142,9 @@ export function resetStorage() {
 
 // Get current requests (for debugging)
 export function getCurrentRequests() {
+  console.log('🔍 getCurrentRequests called');
+  console.log('📊 serviceRequests array:', serviceRequests);
+  console.log('📊 Length:', serviceRequests.length);
+  console.log('🌍 globalThis.__serviceAppData:', (globalThis as any).__serviceAppData);
   return serviceRequests;
 }

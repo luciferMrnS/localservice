@@ -5,15 +5,21 @@ import { useState } from 'react';
 export default function DebugPanel() {
   const [requests, setRequests] = useState<any[]>([]);
   const [listeners, setListeners] = useState(0);
+  const [globalStateInfo, setGlobalStateInfo] = useState<string>('');
 
   const fetchDebugInfo = async () => {
     try {
       // Import the database functions
       const { getCurrentRequests, subscribeToRequests, getServiceRequests } = await import('@/lib/database');
       
+      // Check global state directly
+      const globalStateInfo = `globalThis.__serviceAppData exists: ${!!(globalThis as any).__serviceAppData}`;
+      setGlobalStateInfo(globalStateInfo);
+      
       // Get current requests from global state
       const currentRequests = getCurrentRequests();
       console.log('🔍 Debug panel: Current requests from global state:', currentRequests);
+      console.log('🔍 Debug panel: Global state info:', globalStateInfo);
       setRequests(currentRequests);
       
       // Also try fetching via function
@@ -37,20 +43,60 @@ export default function DebugPanel() {
     }
   };
 
+  const createTestRequest = async () => {
+    try {
+      const { createServiceRequest } = await import('@/lib/database');
+      
+      const testRequest = {
+        clientName: 'Debug Test',
+        phoneNumber: '123-456-7890',
+        serviceAddress: {
+          address: '123 Debug St',
+          lat: 40.7128,
+          lng: -74.0060,
+        },
+        serviceType: 'Debug Service',
+        description: 'Test request from debug panel',
+        photos: [],
+        serviceTier: 'standard' as const,
+        bookingType: 'asap' as const,
+        status: 'pending' as const,
+      };
+      
+      console.log('🧪 Creating test request from debug panel...');
+      const result = await createServiceRequest(testRequest);
+      console.log('✅ Test request created:', result);
+      
+      // Refresh the debug info
+      fetchDebugInfo();
+    } catch (error) {
+      console.error('❌ Error creating test request:', error);
+    }
+  };
+
   return (
     <div className="fixed bottom-4 right-4 bg-white border border-gray-300 rounded-lg shadow-lg p-4 max-w-sm z-50">
       <h3 className="font-bold text-sm mb-2">🔍 Debug Panel</h3>
       
-      <button
-        onClick={fetchDebugInfo}
-        className="w-full bg-blue-500 text-white px-2 py-1 rounded text-xs mb-2 hover:bg-blue-600"
-      >
-        Refresh Debug Info
-      </button>
+      <div className="space-x-2 mb-2">
+        <button
+          onClick={fetchDebugInfo}
+          className="bg-blue-500 text-white px-2 py-1 rounded text-xs hover:bg-blue-600"
+        >
+          Refresh
+        </button>
+        <button
+          onClick={createTestRequest}
+          className="bg-green-500 text-white px-2 py-1 rounded text-xs hover:bg-green-600"
+        >
+          Test Request
+        </button>
+      </div>
       
       <div className="text-xs space-y-1">
         <div>📊 Requests: {requests.length}</div>
         <div>👂 Listeners: {listeners}</div>
+        <div className="text-xs text-gray-500 break-words">{globalStateInfo}</div>
         
         {requests.length > 0 && (
           <div className="mt-2 pt-2 border-t">
