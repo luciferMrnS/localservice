@@ -4,13 +4,14 @@ import { useState } from 'react';
 import ServiceSelection from '@/components/ServiceSelection';
 import ServiceRequestForm from '@/components/ServiceRequestForm';
 import { ServiceType } from '@/types';
-import { createServiceRequest } from '@/lib/database';
+import { useServiceRequests } from '@/contexts/ServiceRequestContext';
 import { calculateDistance } from '@/lib/maps';
 import { uploadPhotos } from '@/lib/storage';
 
 export default function Home() {
   const [selectedService, setSelectedService] = useState<ServiceType | null>(null);
   const [showCustomForm, setShowCustomForm] = useState(false);
+  const { createRequest } = useServiceRequests();
 
   const handleServiceSelect = (service: ServiceType) => {
     setSelectedService(service);
@@ -70,10 +71,10 @@ export default function Home() {
         requestData.scheduledDateTime = new Date(data.scheduledDateTime);
       }
 
-      // Submit to database
+// Submit to database via context
       console.log('💾 Creating service request...');
       console.log('📋 Request data:', requestData);
-      const result = await createServiceRequest(requestData);
+      const result = await createRequest(requestData);
       console.log('✅ Service request created:', result);
       
       alert('Request submitted successfully! We will contact you soon.');

@@ -1,6 +1,7 @@
 'use client';
 
-import { createContext, useContext, useState, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { createServiceRequest, updateServiceRequest, getServiceRequests } from '@/lib/database';
 
 export interface ServiceRequest {
   id: string;
@@ -29,6 +30,7 @@ interface ServiceRequestContextType {
   createRequest: (requestData: Omit<ServiceRequest, 'id' | 'createdAt' | 'updatedAt'>) => Promise<ServiceRequest>;
   updateRequest: (id: string, updates: Partial<ServiceRequest>) => Promise<boolean>;
   getRequests: (status?: ServiceRequest['status']) => ServiceRequest[];
+  refreshRequests: () => Promise<void>;
 }
 
 const ServiceRequestContext = createContext<ServiceRequestContextType | undefined>(undefined);
@@ -47,57 +49,72 @@ interface ServiceRequestProviderProps {
 
 export function ServiceRequestProvider({ children }: ServiceRequestProviderProps) {
   const [requests, setRequests] = useState<ServiceRequest[]>([]);
-  const [nextId, setNextId] = useState(1);
+  const [loading, setLoading] = useState(true);
+
+  // Load requests from database on mount
+  const refreshRequests = async () => {
+    try {
+      console.log('🔄 Loading requests from database...');
+      const dbRequests = await getServiceRequests();
+      console.log('📊 Loaded requests from database:', dbRequests);
+      setRequests(dbRequests);
+    } catch (error) {
+      console.error('❌ Error loading requests from database:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    refreshRequests();
+  }, []);
 
   const createRequest = async (requestData: Omit<ServiceRequest, 'id' | 'createdAt' | 'updatedAt'>): Promise<ServiceRequest> => {
-    console.log('🔥 React Context: Creating request...', requestData);
+    console.log('🔥 Creating request in database...', requestData);
     
-    const newRequest: ServiceRequest = {
-      id: nextId.toString(),
-      ...requestData,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
-    
-    console.log('✅ React Context: New request created:', newRequest);
-    
-    setRequests(prev => {
-      const updated = [...prev, newRequest];
-      console.log('📊 React Context: Updated requests:', updated);
-      return updated;
-    });
-    
-    setNextId(prev => prev + 1);
-    
-    return newRequest;
+    try {
+      const newRequest = await createServiceRequest(requestData);
+      console.log('✅ Request created in database:', newRequest);
+      
+      // Refresh requests to get the latest data
+      await refreshRequests();
+      
+      return newRequest;
+    } catch (error) {
+      console.error('❌ Error creating request in database:', error);
+      throw error;
+    }
   };
 
   const updateRequest = async (id: string, updates: Partial<ServiceRequest>): Promise<boolean> => {
-    console.log('🔄 React Context: Updating request...', id, updates);
+    console.log('🔄 Updating request in database...', id, updates);
     
-    setRequests(prev => {
-      const updated = prev.map(req => 
-        req.id === id 
-          ? { ...req, ...updates, updatedAt: new Date() }
-          : req
-      );
-      console.log('📊 React Context: Requests after update:', updated);
-      return updated;
-    });
-    
-    return true;
+    try {
+      const success = await updateServiceRequest(id, updates);
+      console.log('✅ Request updated in database:', success);
+      
+      if (success) {
+        // Refresh requests to get the latest data
+        await refreshRequests();
+      }
+      
+      return success;
+    } catch (error) {
+      console.error('❌ Error updating request in database:', error);
+      throw error;
+    }
   };
 
   const getRequests = (status?: ServiceRequest['status']): ServiceRequest[] => {
-    console.log('📥 React Context: Getting requests...', status);
+    console.log('📥 Getting requests from context...', status);
     
     let filtered = requests;
     if (status) {
       filtered = requests.filter(req => req.status === status);
     }
     
-    const sorted = filtered.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
-    console.log('📋 React Context: Sorted requests:', sorted);
+    const sorted = filtered.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    console.log('📋 Sorted requests:', sorted);
     
     return sorted;
   };
@@ -107,6 +124,7 @@ export function ServiceRequestProvider({ children }: ServiceRequestProviderProps
     createRequest,
     updateRequest,
     getRequests,
+    refreshRequests,
   };
 
   return (

@@ -5,10 +5,11 @@ import { useServiceRequests } from '@/contexts/ServiceRequestContext';
 import { formatDistance, formatDuration } from '@/lib/maps';
 
 export default function AdminDashboard() {
-  const { requests, updateRequest } = useServiceRequests();
+  const { requests, updateRequest, refreshRequests } = useServiceRequests();
   const [selectedRequest, setSelectedRequest] = useState<any>(null);
   const [filter, setFilter] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   const filteredRequests = requests.filter((request: any) => {
     const matchesStatus = filter === 'all' || request.status === filter;
@@ -75,14 +76,19 @@ export default function AdminDashboard() {
               <div className="text-sm text-gray-600 bg-gray-50 px-3 py-2 rounded-lg">
                 <span className="font-medium">Total Requests:</span> {requests.length}
               </div>
-              <div className="text-sm text-gray-600 bg-gray-50 px-3 py-2 rounded-lg">
-                <span className="font-medium">Storage:</span> React Context
+<div className="text-sm text-gray-600 bg-gray-50 px-3 py-2 rounded-lg">
+                <span className="font-medium">Storage:</span> PostgreSQL Database
               </div>
-              <button
-                onClick={() => window.location.reload()}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+<button
+                onClick={async () => {
+                  setIsRefreshing(true);
+                  await refreshRequests();
+                  setIsRefreshing(false);
+                }}
+                disabled={isRefreshing}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Refresh Data
+                {isRefreshing ? 'Refreshing...' : 'Refresh Data'}
               </button>
             </div>
           </div>
