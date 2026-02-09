@@ -1,8 +1,9 @@
-// Simple in-memory storage for development
-// In production, this would be replaced with Vercel KV or a database
+// Shared data store for Firebase-free version
+// This ensures both the form and admin dashboard share the same data
 
 let serviceRequests: any[] = [];
 let nextId = 1;
+let listeners: (() => void)[] = [];
 
 export interface ServiceRequest {
   id: string;
@@ -26,6 +27,19 @@ export interface ServiceRequest {
   updatedAt: Date;
 }
 
+// Subscribe to data changes
+export function subscribeToRequests(callback: () => void) {
+  listeners.push(callback);
+  return () => {
+    listeners = listeners.filter(listener => listener !== callback);
+  };
+}
+
+// Notify all listeners of data changes
+function notifyListeners() {
+  listeners.forEach(callback => callback());
+}
+
 export async function createServiceRequest(requestData: Omit<ServiceRequest, 'id' | 'createdAt' | 'updatedAt'>) {
   try {
     const newRequest: ServiceRequest = {
@@ -39,6 +53,11 @@ export async function createServiceRequest(requestData: Omit<ServiceRequest, 'id
     nextId++;
     
     console.log('Service request created:', newRequest);
+    console.log('All requests:', serviceRequests);
+    
+    // Notify all listeners that data has changed
+    notifyListeners();
+    
     return newRequest;
   } catch (error) {
     console.error('Error creating service request:', error);
@@ -60,6 +79,10 @@ export async function updateServiceRequest(id: string, updates: Partial<ServiceR
     };
     
     console.log('Service request updated:', serviceRequests[index]);
+    
+    // Notify all listeners that data has changed
+    notifyListeners();
+    
     return true;
   } catch (error) {
     console.error('Error updating service request:', error);
@@ -87,4 +110,10 @@ export async function getServiceRequests(status?: ServiceRequest['status']) {
 export function resetStorage() {
   serviceRequests = [];
   nextId = 1;
+  notifyListeners();
+}
+
+// Get current requests (for debugging)
+export function getCurrentRequests() {
+  return serviceRequests;
 }

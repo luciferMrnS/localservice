@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { ServiceRequest } from '@/types';
-import { getServiceRequests, updateServiceRequest } from '@/lib/database';
+import { getServiceRequests, updateServiceRequest, subscribeToRequests } from '@/lib/database';
 import { formatDistance, formatDuration } from '@/lib/maps';
 import { BASE_LOCATION } from '@/types';
 
@@ -14,11 +14,20 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     fetchRequests();
+    
+    // Subscribe to real-time updates
+    const unsubscribe = subscribeToRequests(() => {
+      console.log('Admin dashboard: Data changed, refreshing...');
+      fetchRequests();
+    });
+    
+    return unsubscribe;
   }, []);
 
   const fetchRequests = async () => {
     try {
       const data = await getServiceRequests();
+      console.log('Admin dashboard: Fetched requests:', data);
       setRequests(data);
     } catch (error) {
       console.error('Error fetching requests:', error);
