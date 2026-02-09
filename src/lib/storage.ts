@@ -1,13 +1,4 @@
-import { put } from '@vercel/blob';
-
 export async function uploadPhotos(files: File[]): Promise<string[]> {
-  // Check if Vercel Blob token is configured
-  const blobToken = process.env.BLOB_READ_WRITE_TOKEN;
-  if (!blobToken || blobToken === 'your_vercel_blob_token_here') {
-    console.log('Vercel Blob token not configured - skipping photo upload');
-    return []; // Return empty array instead of throwing error
-  }
-
   const uploadPromises = files.map(async (file) => {
     try {
       // Create a unique filename
@@ -15,12 +6,21 @@ export async function uploadPhotos(files: File[]): Promise<string[]> {
       const randomId = Math.random().toString(36).substring(2, 15);
       const filename = `${timestamp}-${randomId}-${file.name}`;
       
-      // Upload to Vercel Blob
-      const blob = await put(filename, file, {
-        access: 'public',
-        token: blobToken,
-      });
-      
+      // Upload using API route
+      const response = await fetch(
+        `/api/upload?filename=${encodeURIComponent(filename)}`,
+        {
+          method: 'POST',
+          body: file,
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Upload failed');
+      }
+
+      const blob = await response.json();
       return blob.url;
     } catch (error) {
       console.error('Error uploading photo:', error);
