@@ -2,33 +2,54 @@
 
 import { useState, useEffect } from 'react';
 import { ServiceRequest } from '@/types';
-import { useServiceRequests } from '@/contexts/ServiceRequestContext';
+import { getServiceRequests, updateServiceRequest, subscribeToRequests } from '@/lib/database';
 import { formatDistance, formatDuration } from '@/lib/maps';
 import { BASE_LOCATION } from '@/types';
 
 export default function AdminDashboard() {
-  const { requests, getRequests, updateRequest } = useServiceRequests();
+  const [requests, setRequests] = useState<ServiceRequest[]>([]);
   const [selectedRequest, setSelectedRequest] = useState<ServiceRequest | null>(null);
   const [showMap, setShowMap] = useState(false);
   const [loading, setLoading] = useState(true);
 
+  const fetchRequests = async () => {
+    try {
+      console.log('Fetching service requests...');
+      const data = await getServiceRequests();
+      console.log('Fetched requests:', data);
+      setRequests(data);
+    } catch (error) {
+      console.error('Error fetching requests:', error);
+    }
+  };
+
   useEffect(() => {
-    console.log('🏠 React Context: Admin dashboard mounted');
-    console.log('📊 React Context: Current requests from context:', requests);
+    console.log('Admin dashboard mounted, fetching requests...');
+    fetchRequests();
+    
+    const unsubscribe = subscribeToRequests(() => {
+      console.log('Data changed, re-fetching requests...');
+      fetchRequests();
+    });
+    
     setLoading(false);
-  }, [requests]);
+    
+    return () => {
+      unsubscribe();
+    };
+  }, []);
 
   const handleStatusUpdate = async (requestId: string, newStatus: ServiceRequest['status']) => {
     try {
-      console.log('🔄 React Context: Updating request status...', requestId, newStatus);
-      await updateRequest(requestId, { status: newStatus });
-      console.log('✅ React Context: Request status updated');
+      console.log('Updating request status...', requestId, newStatus);
+      await updateServiceRequest(requestId, { status: newStatus });
+      console.log('Request status updated');
       
       if (selectedRequest?.id === requestId) {
         setSelectedRequest(prev => prev ? { ...prev, status: newStatus } : null);
       }
     } catch (error) {
-      console.error('❌ React Context: Error updating status:', error);
+      console.error('Error updating status:', error);
     }
   };
 

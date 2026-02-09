@@ -39,17 +39,19 @@ export interface ServiceRequest {
 }
 
 // Subscribe to data changes
-export function subscribeToRequests(callback: () => void) {
+type ListenerCallback = () => void;
+
+export function subscribeToRequests(callback: ListenerCallback) {
   listeners.push(callback);
   return () => {
-    listeners = listeners.filter(listener => listener !== callback);
+    listeners = listeners.filter((listener: ListenerCallback) => listener !== callback);
   };
 }
 
 // Notify all listeners of data changes
 function notifyListeners() {
   console.log('📢 notifyListeners called, listeners:', listeners.length);
-  listeners.forEach((callback, index) => {
+  listeners.forEach((callback: ListenerCallback, index: number) => {
     console.log(`📞 Calling listener ${index + 1}`);
     callback();
   });
@@ -88,7 +90,7 @@ export async function createServiceRequest(requestData: Omit<ServiceRequest, 'id
 
 export async function updateServiceRequest(id: string, updates: Partial<ServiceRequest>) {
   try {
-    const index = serviceRequests.findIndex(req => req.id === id);
+    const index = serviceRequests.findIndex((req: ServiceRequest) => req.id === id);
     if (index === -1) {
       throw new Error('Service request not found');
     }
@@ -120,11 +122,11 @@ export async function getServiceRequests(status?: ServiceRequest['status']) {
     let filteredRequests = serviceRequests;
     
     if (status) {
-      filteredRequests = serviceRequests.filter(req => req.status === status);
+      filteredRequests = serviceRequests.filter((req: ServiceRequest) => req.status === status);
     }
     
     // Sort by creation date (newest first)
-    const result = filteredRequests.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+    const result = filteredRequests.sort((a: ServiceRequest, b: ServiceRequest) => b.createdAt.getTime() - a.createdAt.getTime());
     console.log('📋 Sorted result:', result);
     return result;
   } catch (error) {
