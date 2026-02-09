@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { ServiceRequest } from '@/types';
-import { getServiceRequests, updateServiceRequest } from '@/lib/firestore';
+import { getServiceRequests, updateServiceRequest } from '@/lib/database';
 import { formatDistance, formatDuration } from '@/lib/maps';
 import { BASE_LOCATION } from '@/types';
 

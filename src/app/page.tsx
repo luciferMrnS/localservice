@@ -4,7 +4,7 @@ import { useState } from 'react';
 import ServiceSelection from '@/components/ServiceSelection';
 import ServiceRequestForm from '@/components/ServiceRequestForm';
 import { ServiceType } from '@/types';
-import { createServiceRequest } from '@/lib/firestore';
+import { createServiceRequest } from '@/lib/database';
 import { calculateDistance } from '@/lib/maps';
 import { uploadPhotos } from '@/lib/storage';
 import { BASE_LOCATION } from '@/types';
