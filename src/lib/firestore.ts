@@ -14,7 +14,7 @@ export async function createServiceRequest(requestData: Omit<ServiceRequest, 'id
   try {
     console.log('Creating service request with data:', requestData);
     
-    const docRef = await addDoc(collection(db, REQUESTS_COLLECTION), {
+    const docRef = await addDoc(collection(db!, REQUESTS_COLLECTION), {
       ...requestData,
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
@@ -41,8 +41,13 @@ export async function createServiceRequest(requestData: Omit<ServiceRequest, 'id
 }
 
 export async function updateServiceRequest(id: string, updates: Partial<ServiceRequest>) {
+  if (!db) {
+    console.error('Firebase not initialized - cannot update service request');
+    throw new Error('Firebase not configured. Please check your environment variables.');
+  }
+
   try {
-    const docRef = doc(db, REQUESTS_COLLECTION, id);
+    const docRef = doc(db!, REQUESTS_COLLECTION, id);
     await updateDoc(docRef, {
       ...updates,
       updatedAt: serverTimestamp(),
@@ -56,11 +61,16 @@ export async function updateServiceRequest(id: string, updates: Partial<ServiceR
 }
 
 export async function getServiceRequests(status?: ServiceRequest['status']) {
+  if (!db) {
+    console.error('Firebase not initialized - cannot fetch service requests');
+    throw new Error('Firebase not configured. Please check your environment variables.');
+  }
+
   try {
-    let q = query(collection(db, REQUESTS_COLLECTION), orderBy('createdAt', 'desc'));
+    let q = query(collection(db!, REQUESTS_COLLECTION), orderBy('createdAt', 'desc'));
     
     if (status) {
-      q = query(collection(db, REQUESTS_COLLECTION), where('status', '==', status), orderBy('createdAt', 'desc'));
+      q = query(collection(db!, REQUESTS_COLLECTION), where('status', '==', status), orderBy('createdAt', 'desc'));
     }
     
     const querySnapshot = await getDocs(q);

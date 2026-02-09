@@ -1,5 +1,5 @@
 import { initializeApp } from 'firebase/app';
-import { getFirestore } from 'firebase/firestore';
+import { getFirestore, Firestore } from 'firebase/firestore';
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -11,8 +11,8 @@ const firebaseConfig = {
 };
 
 // Initialize Firebase only if config is available
-let app;
-let db;
+let app: any;
+let db: Firestore | null = null;
 
 if (firebaseConfig.apiKey && firebaseConfig.projectId) {
   try {
