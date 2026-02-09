@@ -4,7 +4,7 @@ import { useState } from 'react';
 import ServiceSelection from '@/components/ServiceSelection';
 import ServiceRequestForm from '@/components/ServiceRequestForm';
 import { ServiceType } from '@/types';
-import { createServiceRequest } from '@/lib/database';
+import { useServiceRequests } from '@/contexts/ServiceRequestContext';
 import { calculateDistance } from '@/lib/maps';
 import { uploadPhotos } from '@/lib/storage';
 import { BASE_LOCATION } from '@/types';
@@ -12,9 +12,77 @@ import { BASE_LOCATION } from '@/types';
 export default function Home() {
   const [selectedService, setSelectedService] = useState<ServiceType | null>(null);
   const [showCustomForm, setShowCustomForm] = useState(false);
+  const { createRequest } = useServiceRequests();
 
   const handleServiceSelect = (service: ServiceType) => {
     setSelectedService(service);
+  };
+
+  const handleCustomTask = () => {
+    setShowCustomForm(true);
+  };
+
+  const handleBack = () => {
+    setSelectedService(null);
+    setShowCustomForm(false);
+  };
+
+  const handleFormSubmit = async (data: RequestFormData, photos: File[]) => {
+    try {
+      console.log('🚀 React Context: Starting form submission...');
+      console.log('📝 Form data:', data);
+      console.log('📷 Photos:', photos);
+      
+      // Calculate distance and travel time
+      const distanceResult = await calculateDistance(data.serviceLat, data.serviceLng);
+      console.log('📍 Distance result:', distanceResult);
+      
+      // Upload photos if any
+      let photoUrls: string[] = [];
+      if (photos.length > 0) {
+        console.log('📤 Uploading photos...');
+        photoUrls = await uploadPhotos(photos);
+        console.log('✅ Photos uploaded:', photoUrls);
+      }
+      
+      // Prepare request data
+      const requestData: any = {
+        clientName: data.clientName,
+        phoneNumber: data.phoneNumber,
+        serviceAddress: {
+          address: data.serviceAddress,
+          lat: data.serviceLat,
+          lng: data.serviceLng,
+        },
+        serviceType: selectedService?.name || 'Custom Task',
+        description: data.description,
+        photos: photoUrls,
+        serviceTier: data.serviceTier,
+        bookingType: data.bookingType,
+        status: 'pending' as const,
+        estimatedDistance: distanceResult?.distance,
+        estimatedTravelTime: distanceResult?.duration,
+      };
+
+      // Only include scheduledDateTime if it's provided and booking is scheduled
+      if (data.bookingType === 'scheduled' && data.scheduledDateTime) {
+        requestData.scheduledDateTime = new Date(data.scheduledDateTime);
+      }
+
+      console.log('📋 Final request data:', requestData);
+      
+      // Submit using React Context
+      console.log('💾 React Context: Creating service request...');
+      const result = await createRequest(requestData);
+      console.log('✅ React Context: Service request created:', result);
+      
+      alert('Request submitted successfully! We will contact you soon.');
+      setSelectedService(null);
+      setShowCustomForm(false);
+    } catch (error) {
+      console.error('❌ React Context: Error submitting request:', error);
+      alert('Error submitting request. Please try again.');
+    }
   };
 
   const handleCustomTask = () => {
