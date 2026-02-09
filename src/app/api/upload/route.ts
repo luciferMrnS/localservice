@@ -13,16 +13,14 @@ export async function POST(request: Request) {
       );
     }
 
-    // Check if Vercel Blob is configured
     const blobToken = process.env.BLOB_READ_WRITE_TOKEN;
     if (!blobToken) {
       return NextResponse.json(
-        { error: 'Vercel Blob not configured' },
-        { status: 500 }
+        { error: 'Photo storage not configured' },
+        { status: 503 }
       );
     }
 
-    // Get the file body
     const body = await request.arrayBuffer();
     if (!body) {
       return NextResponse.json(
@@ -31,7 +29,6 @@ export async function POST(request: Request) {
       );
     }
 
-    // Upload file to Vercel Blob
     const blob = await put(filename, body, {
       access: 'public',
       token: blobToken,
