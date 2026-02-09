@@ -1,9 +1,20 @@
 // Shared data store for Firebase-free version
 // This ensures both the form and admin dashboard share the same data
 
-let serviceRequests: any[] = [];
-let nextId = 1;
-let listeners: (() => void)[] = [];
+// Global state to ensure sharing across modules
+const globalState = typeof globalThis !== 'undefined' ? (globalThis as any).__serviceAppData = (globalThis as any).__serviceAppData || {
+  serviceRequests: [],
+  nextId: 1,
+  listeners: [],
+} : {
+  serviceRequests: [],
+  nextId: 1,
+  listeners: [],
+};
+
+let serviceRequests = globalState.serviceRequests;
+let nextId = globalState.nextId;
+let listeners = globalState.listeners;
 
 export interface ServiceRequest {
   id: string;
@@ -102,6 +113,10 @@ export async function updateServiceRequest(id: string, updates: Partial<ServiceR
 
 export async function getServiceRequests(status?: ServiceRequest['status']) {
   try {
+    console.log('🔍 getServiceRequests called');
+    console.log('📊 Current serviceRequests:', serviceRequests);
+    console.log('📊 Length:', serviceRequests.length);
+    
     let filteredRequests = serviceRequests;
     
     if (status) {
@@ -109,9 +124,11 @@ export async function getServiceRequests(status?: ServiceRequest['status']) {
     }
     
     // Sort by creation date (newest first)
-    return filteredRequests.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+    const result = filteredRequests.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+    console.log('📋 Sorted result:', result);
+    return result;
   } catch (error) {
-    console.error('Error fetching service requests:', error);
+    console.error('❌ Error fetching service requests:', error);
     throw error;
   }
 }

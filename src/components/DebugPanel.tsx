@@ -9,16 +9,22 @@ export default function DebugPanel() {
   const fetchDebugInfo = async () => {
     try {
       // Import the database functions
-      const { getCurrentRequests, subscribeToRequests } = await import('@/lib/database');
+      const { getCurrentRequests, subscribeToRequests, getServiceRequests } = await import('@/lib/database');
       
-      // Get current requests
+      // Get current requests from global state
       const currentRequests = getCurrentRequests();
+      console.log('🔍 Debug panel: Current requests from global state:', currentRequests);
       setRequests(currentRequests);
+      
+      // Also try fetching via function
+      const fetchedRequests = await getServiceRequests();
+      console.log('🔍 Debug panel: Fetched requests via function:', fetchedRequests);
       
       // Subscribe to updates to count listeners
       const unsubscribe = subscribeToRequests(() => {
-        console.log('Debug panel: Data updated');
+        console.log('🔄 Debug panel: Data updated');
         const updatedRequests = getCurrentRequests();
+        console.log('🔍 Debug panel: Updated requests:', updatedRequests);
         setRequests(updatedRequests);
       });
       
@@ -27,7 +33,7 @@ export default function DebugPanel() {
       
       return unsubscribe;
     } catch (error) {
-      console.error('Debug panel error:', error);
+      console.error('❌ Debug panel error:', error);
     }
   };
 
