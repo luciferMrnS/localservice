@@ -24,8 +24,6 @@ type ListenerCallback = () => void;
 
 // Load data from Vercel Blob or initialize
 async function loadData(): Promise<void> {
-  if (globalState.initialized) return;
-  
   try {
     if (process.env.BLOB_READ_WRITE_TOKEN) {
       console.log('📦 Loading data from Vercel Blob...');
@@ -41,16 +39,20 @@ async function loadData(): Promise<void> {
         nextId = data.nextId || 1;
         globalState.serviceRequests = serviceRequests;
         globalState.nextId = nextId;
+        globalState.initialized = true;
         console.log('✅ Loaded from Blob:', serviceRequests.length, 'requests');
       } else {
         console.log('📝 No existing blob found, starting fresh');
+        globalState.initialized = true;
       }
+    } else {
+      console.log('💾 Using in-memory storage (development mode)');
+      globalState.initialized = true;
     }
   } catch (error) {
     console.warn('⚠️ Could not load from Blob, using in-memory:', error);
+    globalState.initialized = true;
   }
-  
-  globalState.initialized = true;
 }
 
 // Save data to Vercel Blob
