@@ -50,6 +50,16 @@ export function ServiceRequestProvider({ children }: ServiceRequestProviderProps
   const [requests, setRequests] = useState<ServiceRequest[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // Helper function to validate and fix dates
+  const validateDates = (request: any): ServiceRequest => {
+    return {
+      ...request,
+      createdAt: request.createdAt ? new Date(request.createdAt) : new Date(),
+      updatedAt: request.updatedAt ? new Date(request.updatedAt) : new Date(),
+      scheduledDateTime: request.scheduledDateTime ? new Date(request.scheduledDateTime) : undefined,
+    };
+  };
+
   // Load requests from database via API
   const refreshRequests = async () => {
     try {
@@ -59,7 +69,10 @@ export function ServiceRequestProvider({ children }: ServiceRequestProviderProps
       
       if (result.success) {
         console.log('📊 Loaded requests from API:', result.data);
-        setRequests(result.data);
+        // Validate and fix dates before setting state
+        const validatedRequests = result.data.map(validateDates);
+        console.log('📊 Validated requests:', validatedRequests);
+        setRequests(validatedRequests);
       } else {
         console.error('❌ API Error:', result.error);
       }
@@ -91,10 +104,13 @@ export function ServiceRequestProvider({ children }: ServiceRequestProviderProps
       if (result.success) {
         console.log('✅ Request created via API:', result.data);
         
+        // Validate dates in the response
+        const validatedRequest = validateDates(result.data);
+        
         // Refresh requests to get the latest data
         await refreshRequests();
         
-        return result.data;
+        return validatedRequest;
       } else {
         throw new Error(result.error || 'Failed to create request');
       }

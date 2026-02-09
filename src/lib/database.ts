@@ -67,12 +67,12 @@ export async function createServiceRequest(requestData: Omit<ServiceRequest, 'id
     photos: row.photos || [],
     serviceTier: row.service_tier,
     bookingType: row.booking_type,
-    scheduledDateTime: row.scheduled_timestamp,
+    scheduledDateTime: row.scheduled_timestamp ? new Date(row.scheduled_timestamp) : undefined,
     status: row.status,
     estimatedDistance: row.estimated_distance,
     estimatedTravelTime: row.estimated_travel_time,
-    createdAt: row.created_at,
-    updatedAt: row.updated_at,
+    createdAt: new Date(row.created_at),
+    updatedAt: new Date(row.updated_at),
   };
 }
 
@@ -151,12 +151,12 @@ export async function getServiceRequests(status?: ServiceRequest['status']) {
     photos: row.photos || [],
     serviceTier: row.service_tier,
     bookingType: row.booking_type,
-    scheduledDateTime: row.scheduled_timestamp,
+    scheduledDateTime: row.scheduled_timestamp ? new Date(row.scheduled_timestamp) : undefined,
     status: row.status,
     estimatedDistance: row.estimated_distance,
     estimatedTravelTime: row.estimated_travel_time,
-    createdAt: row.created_at,
-    updatedAt: row.updated_at,
+    createdAt: new Date(row.created_at),
+    updatedAt: new Date(row.updated_at),
   }));
 }
 
