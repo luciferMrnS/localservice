@@ -1,7 +1,6 @@
 'use client';
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { createServiceRequest, updateServiceRequest, getServiceRequests } from '@/lib/database';
 
 export interface ServiceRequest {
   id: string;
@@ -51,15 +50,21 @@ export function ServiceRequestProvider({ children }: ServiceRequestProviderProps
   const [requests, setRequests] = useState<ServiceRequest[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Load requests from database on mount
+  // Load requests from database via API
   const refreshRequests = async () => {
     try {
-      console.log('🔄 Loading requests from database...');
-      const dbRequests = await getServiceRequests();
-      console.log('📊 Loaded requests from database:', dbRequests);
-      setRequests(dbRequests);
+      console.log('🔄 Loading requests from API...');
+      const response = await fetch('/api/service-requests');
+      const result = await response.json();
+      
+      if (result.success) {
+        console.log('📊 Loaded requests from API:', result.data);
+        setRequests(result.data);
+      } else {
+        console.error('❌ API Error:', result.error);
+      }
     } catch (error) {
-      console.error('❌ Error loading requests from database:', error);
+      console.error('❌ Error loading requests from API:', error);
     } finally {
       setLoading(false);
     }
@@ -70,37 +75,61 @@ export function ServiceRequestProvider({ children }: ServiceRequestProviderProps
   }, []);
 
   const createRequest = async (requestData: Omit<ServiceRequest, 'id' | 'createdAt' | 'updatedAt'>): Promise<ServiceRequest> => {
-    console.log('🔥 Creating request in database...', requestData);
+    console.log('🔥 Creating request via API...', requestData);
     
     try {
-      const newRequest = await createServiceRequest(requestData);
-      console.log('✅ Request created in database:', newRequest);
+      const response = await fetch('/api/service-requests', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(requestData),
+      });
       
-      // Refresh requests to get the latest data
-      await refreshRequests();
+      const result = await response.json();
       
-      return newRequest;
+      if (result.success) {
+        console.log('✅ Request created via API:', result.data);
+        
+        // Refresh requests to get the latest data
+        await refreshRequests();
+        
+        return result.data;
+      } else {
+        throw new Error(result.error || 'Failed to create request');
+      }
     } catch (error) {
-      console.error('❌ Error creating request in database:', error);
+      console.error('❌ Error creating request via API:', error);
       throw error;
     }
   };
 
   const updateRequest = async (id: string, updates: Partial<ServiceRequest>): Promise<boolean> => {
-    console.log('🔄 Updating request in database...', id, updates);
+    console.log('🔄 Updating request via API...', id, updates);
     
     try {
-      const success = await updateServiceRequest(id, updates);
-      console.log('✅ Request updated in database:', success);
+      const response = await fetch(`/api/service-requests/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(updates),
+      });
       
-      if (success) {
+      const result = await response.json();
+      
+      if (result.success) {
+        console.log('✅ Request updated via API:', id);
+        
         // Refresh requests to get the latest data
         await refreshRequests();
+        
+        return true;
+      } else {
+        throw new Error(result.error || 'Failed to update request');
       }
-      
-      return success;
     } catch (error) {
-      console.error('❌ Error updating request in database:', error);
+      console.error('❌ Error updating request via API:', error);
       throw error;
     }
   };
