@@ -28,6 +28,10 @@ export default function AddressAutocomplete({
     // Only load Google Maps if API key is available
     if (!process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY === 'your_google_maps_api_key_here') {
       console.log('Google Maps API key not configured - using manual input');
+      console.log('To enable autocomplete:');
+      console.log('1. Get a Google Maps API key from https://console.cloud.google.com');
+      console.log('2. Enable Places API and Geocoding API');
+      console.log('3. Add your key to .env.local: NEXT_PUBLIC_GOOGLE_MAPS_API_KEY=your_key_here');
       setIsLoaded(true);
       return;
     }
