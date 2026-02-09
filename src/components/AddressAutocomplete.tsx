@@ -99,7 +99,7 @@ export default function AddressAutocomplete({
     
     // If no autocomplete is available, still allow manual input
     if (!autocomplete) {
-      // For manual input, we can't get lat/lng, so we'll use default values
+      // For manual input, we can't get lat/lng, so we'll use null values
       // The form validation will handle this
       onAddressSelect(value, 0, 0);
     }

@@ -11,13 +11,30 @@ export async function calculateDistance(
   destinationLat: number,
   destinationLng: number
 ): Promise<DistanceResult | null> {
+  // Check if Google Maps API key is configured
+  const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
+  if (!apiKey || apiKey === 'your_google_maps_api_key_here') {
+    console.log('Google Maps API key not configured - skipping distance calculation');
+    return null;
+  }
+
+  // Check if coordinates are valid (not 0,0 from manual input)
+  if (destinationLat === 0 && destinationLng === 0) {
+    console.log('Invalid coordinates (0,0) - skipping distance calculation');
+    return null;
+  }
+
   try {
     const origin = `${BASE_LOCATION.lat},${BASE_LOCATION.lng}`;
     const destination = `${destinationLat},${destinationLng}`;
     
     const response = await fetch(
-      `https://maps.googleapis.com/maps/api/distancematrix/json?origins=${origin}&destinations=${destination}&units=imperial&key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}`
+      `https://maps.googleapis.com/maps/api/distancematrix/json?origins=${origin}&destinations=${destination}&units=imperial&key=${apiKey}`
     );
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
     
     const data = await response.json();
     
@@ -29,9 +46,10 @@ export async function calculateDistance(
         distanceText: element.distance.text,
         durationText: element.duration.text,
       };
+    } else {
+      console.log('Distance Matrix API returned non-OK status:', data.status);
+      return null;
     }
-    
-    return null;
   } catch (error) {
     console.error('Error calculating distance:', error);
     return null;

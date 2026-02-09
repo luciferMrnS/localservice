@@ -1,6 +1,13 @@
 import { put } from '@vercel/blob';
 
 export async function uploadPhotos(files: File[]): Promise<string[]> {
+  // Check if Vercel Blob token is configured
+  const blobToken = process.env.BLOB_READ_WRITE_TOKEN;
+  if (!blobToken || blobToken === 'your_vercel_blob_token_here') {
+    console.log('Vercel Blob token not configured - skipping photo upload');
+    return []; // Return empty array instead of throwing error
+  }
+
   const uploadPromises = files.map(async (file) => {
     try {
       // Create a unique filename
@@ -11,7 +18,7 @@ export async function uploadPhotos(files: File[]): Promise<string[]> {
       // Upload to Vercel Blob
       const blob = await put(filename, file, {
         access: 'public',
-        token: process.env.BLOB_READ_WRITE_TOKEN,
+        token: blobToken,
       });
       
       return blob.url;
