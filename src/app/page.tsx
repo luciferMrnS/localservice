@@ -69,7 +69,23 @@ export default function Home() {
       setShowCustomForm(false);
     } catch (error) {
       console.error('Error submitting request:', error);
-      alert('Error submitting request. Please try again.');
+      
+      // Provide more specific error messages
+      let errorMessage = 'Error submitting request. Please try again.';
+      
+      if (error instanceof Error) {
+        if (error.message.includes('Firebase not configured')) {
+          errorMessage = 'Firebase not configured. Please contact support.';
+        } else if (error.message.includes('permission-denied')) {
+          errorMessage = 'Permission denied. Please contact support.';
+        } else if (error.message.includes('unavailable')) {
+          errorMessage = 'Service unavailable. Please check your internet connection.';
+        } else if (error.message.includes('unauthenticated')) {
+          errorMessage = 'Authentication failed. Please contact support.';
+        }
+      }
+      
+      alert(errorMessage);
     }
   };
 

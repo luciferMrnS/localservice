@@ -5,16 +5,37 @@ import { ServiceRequest } from '@/types';
 const REQUESTS_COLLECTION = 'serviceRequests';
 
 export async function createServiceRequest(requestData: Omit<ServiceRequest, 'id' | 'createdAt' | 'updatedAt'>) {
+  // Check if Firebase is properly initialized
+  if (!db) {
+    console.error('Firebase not initialized - cannot create service request');
+    throw new Error('Firebase not configured. Please check your environment variables.');
+  }
+
   try {
+    console.log('Creating service request with data:', requestData);
+    
     const docRef = await addDoc(collection(db, REQUESTS_COLLECTION), {
       ...requestData,
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
     });
     
+    console.log('Service request created successfully with ID:', docRef.id);
     return { id: docRef.id, ...requestData };
   } catch (error) {
     console.error('Error creating service request:', error);
+    
+    // Provide more specific error messages
+    if (error instanceof Error) {
+      if (error.message.includes('permission-denied')) {
+        throw new Error('Firebase permission denied. Please check your Firestore security rules.');
+      } else if (error.message.includes('unavailable')) {
+        throw new Error('Firebase unavailable. Please check your internet connection.');
+      } else if (error.message.includes('unauthenticated')) {
+        throw new Error('Firebase authentication failed. Please check your API keys.');
+      }
+    }
+    
     throw error;
   }
 }
