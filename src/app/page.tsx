@@ -38,7 +38,7 @@ export default function Home() {
       }
       
       // Prepare request data
-      const requestData = {
+      const requestData: any = {
         clientName: data.clientName,
         phoneNumber: data.phoneNumber,
         serviceAddress: {
@@ -51,11 +51,15 @@ export default function Home() {
         photos: photoUrls,
         serviceTier: data.serviceTier,
         bookingType: data.bookingType,
-        scheduledDateTime: data.scheduledDateTime ? new Date(data.scheduledDateTime) : undefined,
         status: 'pending' as const,
         estimatedDistance: distanceResult?.distance,
         estimatedTravelTime: distanceResult?.duration,
       };
+
+      // Only include scheduledDateTime if it's provided and booking is scheduled
+      if (data.bookingType === 'scheduled' && data.scheduledDateTime) {
+        requestData.scheduledDateTime = new Date(data.scheduledDateTime);
+      }
 
       // Submit to Firebase
       await createServiceRequest(requestData);
