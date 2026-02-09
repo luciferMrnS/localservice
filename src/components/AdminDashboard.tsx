@@ -1,59 +1,25 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { ServiceRequest } from '@/types';
-import { getServiceRequests, updateServiceRequest, subscribeToRequests } from '@/lib/database';
+import { useState } from 'react';
+import { useServiceRequests } from '@/contexts/ServiceRequestContext';
 import { formatDistance, formatDuration } from '@/lib/maps';
-import { BASE_LOCATION } from '@/types';
 
 export default function AdminDashboard() {
-  const [requests, setRequests] = useState<ServiceRequest[]>([]);
-  const [selectedRequest, setSelectedRequest] = useState<ServiceRequest | null>(null);
-  const [showMap, setShowMap] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const { requests, updateRequest } = useServiceRequests();
+  const [selectedRequest, setSelectedRequest] = useState<any>(null);
+  const [filter, setFilter] = useState('all');
+  const [searchTerm, setSearchTerm] = useState('');
 
-  const fetchRequests = async () => {
-    try {
-      console.log('Fetching service requests...');
-      const data = await getServiceRequests();
-      console.log('Fetched requests:', data);
-      setRequests(data);
-    } catch (error) {
-      console.error('Error fetching requests:', error);
-    }
-  };
+  const filteredRequests = requests.filter((request: any) => {
+    const matchesStatus = filter === 'all' || request.status === filter;
+    const matchesSearch = searchTerm === '' || 
+      request.clientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      request.serviceType.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      request.serviceAddress.address.toLowerCase().includes(searchTerm.toLowerCase());
+    return matchesStatus && matchesSearch;
+  });
 
-  useEffect(() => {
-    console.log('Admin dashboard mounted, fetching requests...');
-    fetchRequests();
-    
-    const unsubscribe = subscribeToRequests(() => {
-      console.log('Data changed, re-fetching requests...');
-      fetchRequests();
-    });
-    
-    setLoading(false);
-    
-    return () => {
-      unsubscribe();
-    };
-  }, []);
-
-  const handleStatusUpdate = async (requestId: string, newStatus: ServiceRequest['status']) => {
-    try {
-      console.log('Updating request status...', requestId, newStatus);
-      await updateServiceRequest(requestId, { status: newStatus });
-      console.log('Request status updated');
-      
-      if (selectedRequest?.id === requestId) {
-        setSelectedRequest(prev => prev ? { ...prev, status: newStatus } : null);
-      }
-    } catch (error) {
-      console.error('Error updating status:', error);
-    }
-  };
-
-  const getStatusColor = (status: ServiceRequest['status']) => {
+  const getStatusColor = (status: string) => {
     switch (status) {
       case 'pending': return 'bg-yellow-100 text-yellow-800';
       case 'accepted': return 'bg-blue-100 text-blue-800';
@@ -64,70 +30,121 @@ export default function AdminDashboard() {
     }
   };
 
-  const getStatusText = (status: ServiceRequest['status']) => {
+  const getStatusIcon = (status: string) => {
     switch (status) {
-      case 'pending': return 'Pending';
-      case 'accepted': return 'Accepted';
-      case 'in_progress': return 'In Progress';
-      case 'completed': return 'Completed';
-      case 'cancelled': return 'Cancelled';
-      default: return status;
+      case 'pending': return '⏳';
+      case 'accepted': return '✅';
+      case 'in_progress': return '🔧';
+      case 'completed': return '🎉';
+      case 'cancelled': return '❌';
+      default: return '📋';
     }
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading requests...</p>
-        </div>
-      </div>
-    );
-  }
+  const handleStatusUpdate = async (requestId: string, newStatus: 'pending' | 'accepted' | 'in_progress' | 'completed' | 'cancelled') => {
+    try {
+      await updateRequest(requestId, { status: newStatus });
+      if (selectedRequest?.id === requestId) {
+        setSelectedRequest((prev: any) => prev ? { ...prev, status: newStatus } : null);
+      }
+    } catch (error) {
+      console.error('Error updating status:', error);
+    }
+  };
+
+  const formatDate = (date: Date) => {
+    return new Intl.DateTimeFormat('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    }).format(date);
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
       <div className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-6">
-            <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
-            <div className="flex items-center gap-4">
-              <span className="text-sm text-gray-600">
-                Base Location: {BASE_LOCATION.address}
-              </span>
+          <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center py-6 gap-4">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
+              <p className="text-gray-600 mt-1">Manage all service requests and client submissions</p>
+            </div>
+            <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
+              <div className="text-sm text-gray-600 bg-gray-50 px-3 py-2 rounded-lg">
+                <span className="font-medium">Total Requests:</span> {requests.length}
+              </div>
+              <div className="text-sm text-gray-600 bg-gray-50 px-3 py-2 rounded-lg">
+                <span className="font-medium">Storage:</span> React Context
+              </div>
               <button
-                onClick={fetchRequests}
+                onClick={() => window.location.reload()}
                 className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
               >
-                Refresh
+                Refresh Data
               </button>
             </div>
           </div>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Requests List */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <div className="bg-white rounded-lg shadow-sm border p-6">
+          <div className="flex flex-col sm:flex-row gap-4">
+            <div className="flex-1">
+              <label className="block text-sm font-medium text-gray-700 mb-2">Search Requests</label>
+              <input
+                type="text"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder="Search by name, service, or address..."
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <div className="sm:w-48">
+              <label className="block text-sm font-medium text-gray-700 mb-2">Filter by Status</label>
+              <select
+                value={filter}
+                onChange={(e) => setFilter(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="all">All Requests</option>
+                <option value="pending">Pending</option>
+                <option value="accepted">Accepted</option>
+                <option value="in_progress">In Progress</option>
+                <option value="completed">Completed</option>
+                <option value="cancelled">Cancelled</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2">
             <div className="bg-white rounded-lg shadow-sm border">
               <div className="px-6 py-4 border-b">
-                <h2 className="text-xl font-semibold text-gray-900">
-                  Service Requests ({requests.length})
-                </h2>
+                <h2 className="text-xl font-semibold text-gray-900">Service Requests ({filteredRequests.length})</h2>
               </div>
-              <div className="divide-y">
-                {requests.length === 0 ? (
-                  <div className="px-6 py-8 text-center text-gray-500">
-                    No service requests yet
-                  </div>
-                ) : (
-                  requests.map((request) => (
+              
+              {filteredRequests.length === 0 ? (
+                <div className="px-6 py-12 text-center">
+                  <div className="text-4xl mb-4">📋</div>
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">No requests found</h3>
+                  <p className="text-sm text-gray-600">
+                    {requests.length === 0 
+                      ? "No service requests have been submitted yet." 
+                      : "No requests match your current filters."}
+                  </p>
+                </div>
+              ) : (
+                <div className="divide-y">
+                  {filteredRequests.map((request: any) => (
                     <div
                       key={request.id}
-                      className={`px-6 py-4 hover:bg-gray-50 cursor-pointer transition-colors ${
+                      className={`p-6 hover:bg-gray-50 cursor-pointer transition-colors ${
                         selectedRequest?.id === request.id ? 'bg-blue-50' : ''
                       }`}
                       onClick={() => setSelectedRequest(request)}
@@ -135,81 +152,69 @@ export default function AdminDashboard() {
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
                           <div className="flex items-center gap-3 mb-2">
-                            <h3 className="font-semibold text-gray-900">
-                              {request.serviceType}
-                            </h3>
+                            <h3 className="font-semibold text-gray-900">{request.serviceType}</h3>
                             <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(request.status)}`}>
-                              {getStatusText(request.status)}
+                              {getStatusIcon(request.status)} {request.status.replace('_', ' ')}
                             </span>
                             {request.serviceTier === 'emergency' && (
-                              <span className="px-2 py-1 bg-red-100 text-red-800 rounded-full text-xs font-medium">
-                                Emergency
-                              </span>
+                              <span className="px-2 py-1 bg-red-100 text-red-800 rounded-full text-xs font-medium">🚨 Emergency</span>
                             )}
                           </div>
-                          <p className="text-sm text-gray-600 mb-1">
-                            {request.clientName} • {request.phoneNumber}
-                          </p>
-                          <p className="text-sm text-gray-600 mb-1">
-                            {request.serviceAddress.address}
-                          </p>
-                          <div className="flex items-center gap-4 text-xs text-gray-500">
-                            <span>
-                              {request.bookingType === 'asap' ? 'ASAP' : `Scheduled: ${request.scheduledDateTime?.toLocaleString()}`}
-                            </span>
-                            {request.estimatedDistance && (
-                              <span>{formatDistance(request.estimatedDistance)} away</span>
-                            )}
-                            {request.estimatedTravelTime && (
-                              <span>{formatDuration(request.estimatedTravelTime)} travel time</span>
-                            )}
+                          <div className="space-y-1 text-sm text-gray-600">
+                            <p><span className="text-gray-500">Client:</span> {request.clientName} • {request.phoneNumber}</p>
+                            <p><span className="text-gray-500">Address:</span> {request.serviceAddress.address}</p>
+                            <p className="text-xs text-gray-500">
+                              {request.bookingType === 'asap' ? '🚀 ASAP' : '📅 Scheduled'} • {formatDate(request.createdAt)}
+                            </p>
                           </div>
                         </div>
                       </div>
                     </div>
-                  ))
-                )}
-              </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
 
-          {/* Request Details */}
           <div className="lg:col-span-1">
             {selectedRequest ? (
-              <div className="bg-white rounded-lg shadow-sm border">
+              <div className="bg-white rounded-lg shadow-sm border sticky top-6">
                 <div className="px-6 py-4 border-b">
-                  <h2 className="text-xl font-semibold text-gray-900">
-                    Request Details
-                  </h2>
+                  <h2 className="text-lg font-semibold text-gray-900">Request Details</h2>
                 </div>
-                <div className="p-6 space-y-4">
+                <div className="p-6 space-y-6">
                   <div>
-                    <h3 className="font-medium text-gray-900 mb-1">Service</h3>
-                    <p className="text-sm text-gray-600">{selectedRequest.serviceType}</p>
-                  </div>
-                  
-                  <div>
-                    <h3 className="font-medium text-gray-900 mb-1">Client</h3>
-                    <p className="text-sm text-gray-600">{selectedRequest.clientName}</p>
-                    <p className="text-sm text-gray-600">{selectedRequest.phoneNumber}</p>
-                  </div>
-                  
-                  <div>
-                    <h3 className="font-medium text-gray-900 mb-1">Address</h3>
-                    <p className="text-sm text-gray-600">{selectedRequest.serviceAddress.address}</p>
-                  </div>
-                  
-                  <div>
-                    <h3 className="font-medium text-gray-900 mb-1">Description</h3>
-                    <p className="text-sm text-gray-600">{selectedRequest.description}</p>
-                  </div>
-                  
-                  {selectedRequest.estimatedDistance && (
-                    <div>
-                      <h3 className="font-medium text-gray-900 mb-1">Distance & Time</h3>
-                      <p className="text-sm text-gray-600">
-                        {formatDistance(selectedRequest.estimatedDistance)} • {formatDuration(selectedRequest.estimatedTravelTime || 0)}
+                    <h3 className="font-medium text-gray-900 mb-2">Service Information</h3>
+                    <div className="space-y-2 text-sm">
+                      <p><span className="text-gray-500">Service:</span> {selectedRequest.serviceType}</p>
+                      <p>
+                        <span className="text-gray-500">Status:</span> 
+                        <span className={`ml-2 px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(selectedRequest.status)}`}>
+                          {getStatusIcon(selectedRequest.status)} {selectedRequest.status.replace('_', ' ')}
+                        </span>
                       </p>
+                      <p>
+                        <span className="text-gray-500">Priority:</span> 
+                        <span className={`ml-2 px-2 py-1 rounded-full text-xs font-medium ${selectedRequest.serviceTier === 'emergency' ? 'bg-red-100 text-red-800' : 'bg-blue-100 text-blue-800'}`}>
+                          {selectedRequest.serviceTier === 'emergency' ? '🚨 Emergency' : '📋 Standard'}
+                        </span>
+                      </p>
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <h3 className="font-medium text-gray-900 mb-2">Client Information</h3>
+                    <div className="space-y-2 text-sm">
+                      <p><span className="text-gray-500">Name:</span> {selectedRequest.clientName}</p>
+                      <p><span className="text-gray-500">Phone:</span> {selectedRequest.phoneNumber}</p>
+                      <p><span className="text-gray-500">Address:</span> {selectedRequest.serviceAddress.address}</p>
+                    </div>
+                  </div>
+                  
+                  {selectedRequest.description && (
+                    <div>
+                      <h3 className="font-medium text-gray-900 mb-2">Description</h3>
+                      <p className="text-sm text-gray-600 p-3 bg-gray-50 rounded-md">{selectedRequest.description}</p>
                     </div>
                   )}
                   
@@ -218,94 +223,32 @@ export default function AdminDashboard() {
                     <div className="space-y-2">
                       {selectedRequest.status === 'pending' && (
                         <>
-                          <button
-                            onClick={() => handleStatusUpdate(selectedRequest.id, 'accepted')}
-                            className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                          >
-                            Accept Request
-                          </button>
-                          <button
-                            onClick={() => handleStatusUpdate(selectedRequest.id, 'cancelled')}
-                            className="w-full px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
-                          >
-                            Cancel Request
-                          </button>
+                          <button onClick={() => handleStatusUpdate(selectedRequest.id, 'accepted')} className="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">✅ Accept Request</button>
+                          <button onClick={() => handleStatusUpdate(selectedRequest.id, 'cancelled')} className="w-full px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700">❌ Cancel Request</button>
                         </>
                       )}
-                      
                       {selectedRequest.status === 'accepted' && (
-                        <button
-                          onClick={() => handleStatusUpdate(selectedRequest.id, 'in_progress')}
-                          className="w-full px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
-                        >
-                          Start Job
-                        </button>
+                        <button onClick={() => handleStatusUpdate(selectedRequest.id, 'in_progress')} className="w-full px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700">🔧 Start Job</button>
                       )}
-                      
                       {selectedRequest.status === 'in_progress' && (
-                        <button
-                          onClick={() => handleStatusUpdate(selectedRequest.id, 'completed')}
-                          className="w-full px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-                        >
-                          Complete Job
-                        </button>
+                        <button onClick={() => handleStatusUpdate(selectedRequest.id, 'completed')} className="w-full px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700">🎉 Complete Job</button>
                       )}
-                      
-                      <button
-                        onClick={() => setShowMap(true)}
-                        className="w-full px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
-                      >
-                        View Map
-                      </button>
                     </div>
                   </div>
                 </div>
               </div>
             ) : (
-              <div className="bg-white rounded-lg shadow-sm border p-6 text-center text-gray-500">
-                Select a request to view details
+              <div className="bg-white rounded-lg shadow-sm border p-6">
+                <div className="text-center">
+                  <div className="text-gray-400 text-4xl mb-4">📋</div>
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">Select a Request</h3>
+                  <p className="text-sm text-gray-600">Click on a request to view details</p>
+                </div>
               </div>
             )}
           </div>
         </div>
       </div>
-
-      {/* Map Modal */}
-      {showMap && selectedRequest && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full mx-4 max-h-[90vh] overflow-hidden">
-            <div className="px-6 py-4 border-b flex justify-between items-center">
-              <h3 className="text-xl font-semibold text-gray-900">
-                Route to {selectedRequest.serviceAddress.address}
-              </h3>
-              <button
-                onClick={() => setShowMap(false)}
-                className="text-gray-400 hover:text-gray-600"
-              >
-                ×
-              </button>
-            </div>
-            <div className="p-6">
-              <div className="bg-gray-100 rounded-lg h-96 flex items-center justify-center">
-                <div className="text-center text-gray-600">
-                  <div className="text-4xl mb-4">🗺️</div>
-                  <p>Map integration would go here</p>
-                  <p className="text-sm mt-2">
-                    From: {BASE_LOCATION.address}<br />
-                    To: {selectedRequest.serviceAddress.address}
-                  </p>
-                  {selectedRequest.estimatedDistance && (
-                    <p className="text-sm mt-2">
-                      Distance: {formatDistance(selectedRequest.estimatedDistance)}<br />
-                      Travel Time: {formatDuration(selectedRequest.estimatedTravelTime || 0)}
-                    </p>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
